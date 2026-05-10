@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Security Toolkit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #0a0a0a; color: #00ff88; }
+        .container { max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1 { text-align: center; font-size: 28px; margin-bottom: 30px; color: #00ff88; }
+        .card { background: #1a1a1a; border: 1px solid #00ff88; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        h2 { font-size: 18px; margin-bottom: 15px; color: #00ccff; }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; background: #0a0a0a; border: 1px solid #00ff88; color: #fff; border-radius: 5px; }
+        button { padding: 10px 20px; background: #00ff88; color: #000; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #00ccff; }
+        .result { margin-top: 15px; padding: 10px; background: #0a0a0a; border-radius: 5px; min-height: 40px; color: #fff; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔐 Password Security Toolkit</h1>
+
+    <!-- Password Strength Analyzer -->
+    <div class="card">
+        <h2>💪 Password Strength Analyzer</h2>
+        <input type="text" id="analyzeInput" placeholder="Enter password to analyze">
+        <button onclick="analyzePassword()">Analyze</button>
+        <div class="result" id="analyzeResult"></div>
+    </div>
+
+    <!-- Dictionary Generator -->
+    <div class="card">
+        <h2>📖 Dictionary Generator</h2>
+        <input type="text" id="dictInput" placeholder="Enter base words (comma-separated): yashas, admin">
+        <button onclick="generateDict()">Generate</button>
+        <div class="result" id="dictResult"></div>
+    </div>
+
+    <!-- Hash Extractor -->
+    <div class="card">
+        <h2>🔑 Hash Extractor</h2>
+        <input type="text" id="hashUser" placeholder="Enter username">
+        <input type="text" id="hashPass" placeholder="Enter password">
+        <button onclick="extractHash()">Extract Hash</button>
+        <div class="result" id="hashResult"></div>
+    </div>
+
+    <!-- Brute Force -->
+    <div class="card">
+        <h2>💥 Brute Force Simulation</h2>
+        <input type="text" id="bruteInput" placeholder="Enter short password to crack (max 4 chars)">
+        <button onclick="bruteForce()">Start Attack</button>
+        <div class="result" id="bruteResult"></div>
+    </div>
+
+    <!-- Dictionary Attack -->
+    <div class="card">
+        <h2>📚 Dictionary Attack</h2>
+        <input type="text" id="dictAttackInput" placeholder="Enter password to test against wordlist">
+        <button onclick="dictAttack()">Start Attack</button>
+        <div class="result" id="dictAttackResult"></div>
+    </div>
+</div>
+
+<script>
+    async function analyzePassword() {
+        const pwd = document.getElementById('analyzeInput').value;
+        const form = new FormData();
+        form.append('password', pwd);
+        const res = await fetch('/analyze', { method: 'POST', body: form });
+        const data = await res.json();
+        document.getElementById('analyzeResult').innerHTML =
+            `Strength: <b>${data.strength}</b> (${data.score}/7)<br>` +
+            (data.feedback.length ? data.feedback.join('<br>') : '✅ All checks passed!');
+    }
+
+    async function generateDict() {
+        const words = document.getElementById('dictInput').value;
+        const form = new FormData();
+        form.append('words', words);
+        const res = await fetch('/generate', { method: 'POST', body: form });
+        const data = await res.json();
+        document.getElementById('dictResult').innerHTML = data.message;
+    }
+
+    async function extractHash() {
+        const user = document.getElementById('hashUser').value;
+        const pass = document.getElementById('hashPass').value;
+        const form = new FormData();
+        form.append('username', user);
+        form.append('password', pass);
+        const res = await fetch('/hashextract', { method: 'POST', body: form });
+        const data = await res.json();
+        document.getElementById('hashResult').innerHTML =
+            Object.entries(data).map(([u,h]) => `${u}: <b>${h}</b>`).join('<br>');
+    }
+
+    async function bruteForce() {
+        const pwd = document.getElementById('bruteInput').value;
+        const form = new FormData();
+        form.append('password', pwd);
+        document.getElementById('bruteResult').innerHTML = '⏳ Running... please wait';
+        const res = await fetch('/bruteforce', { method: 'POST', body: form });
+        const data = await res.json();
+        document.getElementById('bruteResult').innerHTML =
+            data.status === 'success'
+            ? `✅ Cracked: <b>${data.password}</b> in ${data.time}`
+            : `❌ ${data.message}`;
+    }
+
+    async function dictAttack() {
+        const pwd = document.getElementById('dictAttackInput').value;
+        const form = new FormData();
+        form.append('password', pwd);
+        const res = await fetch('/dictionary', { method: 'POST', body: form });
+        const data = await res.json();
+        document.getElementById('dictAttackResult').innerHTML =
+            data.status === 'success'
+            ? `✅ Found: <b>${data.password}</b>`
+            : `❌ ${data.message}`;
+    }
+</script>
+</body>
+</html>
